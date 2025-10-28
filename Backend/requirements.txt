@@ -1,0 +1,11 @@
+streamlit
+python-docx
+python-pptx
+PyPDF2
+requests
+langchain==0.1.16
+openai
+python-dotenv
+docx2txt
+google-generativeai
+flask
