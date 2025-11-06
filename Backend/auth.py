@@ -190,6 +190,57 @@ from the given context.
         return jsonify({"error": str(e)}), 500
 
 # ------------------- QUIZ SUBMISSION -------------------
+@app.route('/save-quiz-result', methods=['POST', 'OPTIONS'])
+def save_quiz_result():
+    # ✅ Handle CORS preflight
+    if request.method == "OPTIONS":
+        return jsonify({"message": "CORS preflight OK"}), 200
+
+    try:
+        data = request.get_json()
+        if not isinstance(data, list):
+            return jsonify({"error": "Expected list of MCQ results"}), 400
+
+        username = data[0].get("username")
+        if not username:
+            return jsonify({"error": "Missing username"}), 400
+
+        results = []
+        correct_count = 0
+
+        for record in data:
+            q = record.get("question")
+            ua = record.get("userAnswer")
+            ca = record.get("correctAnswer")
+
+            if not all([q, ua, ca]):
+                continue
+
+            is_correct = ua.strip().lower() == ca.strip().lower()
+            if is_correct:
+                correct_count += 1
+
+            results.append({
+                "question": q,
+                "userAnswer": ua,
+                "correctAnswer": ca,
+                "isCorrect": is_correct
+            })
+
+        quiz_results_col.insert_one({
+            "username": username,
+            "timestamp": datetime.now().isoformat(),
+            "score": correct_count,
+            "totalQuestions": len(results),
+            "results": results
+        })
+
+        return jsonify({"message": "Quiz saved successfully"}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 @app.route("/submit_quiz", methods=["POST"])
 @login_required
 def submit_quiz():

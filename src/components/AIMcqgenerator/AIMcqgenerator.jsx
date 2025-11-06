@@ -97,25 +97,49 @@ const AIMcqgenerator = () => {
   };
 
   // ✅ FIXED SCORING LOGIC
-  const handleSubmit = () => {
-    let tempScore = 0;
+  const handleSubmit = async () => {
+  let tempScore = 0;
 
-    mcqs.forEach((q, idx) => {
-      const userAns = selectedOptions[idx];
-      const correctAnsText = resolveCorrectOptionText(q);
-      if (!userAns || !correctAnsText) return;
+  // ✅ Fetch logged-in username dynamically
+  const username = localStorage.getItem("username") || "Guest";
 
-      const userNorm = userAns.trim().toLowerCase();
-      const correctNorm = correctAnsText.trim().toLowerCase();
+  const submissionData = mcqs.map((q, idx) => {
+    const userAns = selectedOptions[idx];
+    const correctAnsText = resolveCorrectOptionText(q);
+    const isCorrect =
+      userAns?.trim().toLowerCase() === correctAnsText?.trim().toLowerCase();
 
-      if (userNorm === correctNorm) tempScore++;
-      else if (userNorm.includes(correctNorm) || correctNorm.includes(userNorm))
-        tempScore++;
+    if (isCorrect) tempScore++;
+
+    return {
+      username,
+      question: q.question,
+      userAnswer: userAns || "",
+      correctAnswer: correctAnsText || "",
+    };
+  });
+
+  setScore(tempScore);
+  setSubmitted(true);
+
+  // ✅ Send to backend
+  console.log("🧩 Sending submission data:", submissionData);
+  console.log("🧩 Data type:", typeof submissionData);
+
+  try {
+    const res = await fetch("http://localhost:5000/save-quiz-result", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(submissionData),
     });
 
-    setScore(tempScore);
-    setSubmitted(true);
-  };
+    const result = await res.json();
+    console.log("Saved:", result);
+
+  } catch (error) {
+    console.error("Error sending data:", error);
+  }
+};
 
   const handleRestart = () => {
     setMcqs([]);

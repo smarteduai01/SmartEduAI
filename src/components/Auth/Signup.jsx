@@ -41,6 +41,7 @@ export default function Signup({ onAuthSuccess }) {
       const data = await res.json();
 
       if (res.ok) {
+        localStorage.setItem("username", username);
         setMessage(
           isLogin
             ? "✅ Logged in — redirecting..."
